@@ -102,6 +102,9 @@ parse_settings(<<0,5,Val:4/binary,T/binary>>, S) ->
     parse_settings(T, [{?SETTINGS_MAX_FRAME_SIZE, binary:decode_unsigned(Val)}|S]);
 parse_settings(<<0,6,Val:4/binary,T/binary>>, S)->
     parse_settings(T, [{?SETTINGS_MAX_HEADER_LIST_SIZE, binary:decode_unsigned(Val)}|S]);
+%% Explicitly ignore SETTINGS identifier 0x0008 (RFC 8441)
+parse_settings(<<0,8,_Val:4/binary,T/binary>>, S) ->
+    parse_settings(T, S);
 % An endpoint that receives a SETTINGS frame with any unknown or unsupported identifier 
 % MUST ignore that setting
 parse_settings(<<_:6/binary,T/binary>>, S)->
