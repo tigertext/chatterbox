@@ -28,7 +28,8 @@ to_proplist(Settings) ->
      {?SETTINGS_MAX_CONCURRENT_STREAMS, Settings#settings.max_concurrent_streams},
      {?SETTINGS_INITIAL_WINDOW_SIZE,    Settings#settings.initial_window_size   },
      {?SETTINGS_MAX_FRAME_SIZE,         Settings#settings.max_frame_size        },
-     {?SETTINGS_MAX_HEADER_LIST_SIZE,   Settings#settings.max_header_list_size  }
+     {?SETTINGS_MAX_HEADER_LIST_SIZE,   Settings#settings.max_header_list_size  },
+     {?SETTINGS_ENABLE_CONNECT_PROTOCOL, Settings#settings.enable_connect_protocol}
     ].
 
 -ifdef(TEST).
