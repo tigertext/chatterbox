@@ -105,7 +105,8 @@
                    max_concurrent_streams   = unlimited,
                    initial_window_size      = 65535,
                    max_frame_size           = 16384,
-                   max_header_list_size     = unlimited}).
+                   max_header_list_size     = unlimited,
+                   enable_connect_protocol  = 0}).
 -type settings() :: #settings{}.
 
 -define(SETTINGS_HEADER_TABLE_SIZE,         <<16#1>>).
@@ -114,13 +115,15 @@
 -define(SETTINGS_INITIAL_WINDOW_SIZE,       <<16#4>>).
 -define(SETTINGS_MAX_FRAME_SIZE,            <<16#5>>).
 -define(SETTINGS_MAX_HEADER_LIST_SIZE,      <<16#6>>).
+-define(SETTINGS_ENABLE_CONNECT_PROTOCOL,   <<16#8>>).
 
 -define(SETTING_NAMES, [?SETTINGS_HEADER_TABLE_SIZE,
                         ?SETTINGS_ENABLE_PUSH,
                         ?SETTINGS_MAX_CONCURRENT_STREAMS,
                         ?SETTINGS_INITIAL_WINDOW_SIZE,
                         ?SETTINGS_MAX_FRAME_SIZE,
-                        ?SETTINGS_MAX_HEADER_LIST_SIZE]).
+                        ?SETTINGS_MAX_HEADER_LIST_SIZE,
+                        ?SETTINGS_ENABLE_CONNECT_PROTOCOL]).
 
 -type setting_name() :: binary().
 -type settings_property() :: {setting_name(), any()}.
