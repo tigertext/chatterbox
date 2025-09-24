@@ -37,7 +37,8 @@ format(#settings{
         max_concurrent_streams   = MCS,
         initial_window_size      = IWS,
         max_frame_size           = MFS,
-        max_header_list_size     = MHLS
+        max_header_list_size     = MHLS,
+        enable_connect_protocol  = ECP
     }) ->
     lists:flatten(
         io_lib:format("[Settings: "
@@ -46,7 +47,8 @@ format(#settings{
         " max_concurrent_streams   = ~p,"
         " initial_window_size      = ~p,"
         " max_frame_size           = ~p,"
-        " max_header_list_size     = ~p~n]", [HTS,EP,MCS,IWS,MFS,MHLS]));
+        " max_header_list_size     = ~p,"
+        " enable_connect_protocol = ~p~n]", [HTS,EP,MCS,IWS,MFS,MHLS,ECP]));
 format({settings, PList}) ->
     L = lists:map(fun({?SETTINGS_HEADER_TABLE_SIZE,V}) ->
                       {header_table_size,V};
@@ -59,7 +61,9 @@ format({settings, PList}) ->
                  ({?SETTINGS_MAX_FRAME_SIZE,V}) ->
                       {max_frame_size,V};
                  ({?SETTINGS_MAX_HEADER_LIST_SIZE,V}) ->
-                      {max_header_list_size,V}
+                      {max_header_list_size,V};
+                 ({?SETTINGS_ENABLE_CONNECT_PROTOCOL,V}) ->
+                      {enable_connect_protocol,V}
               end,
               PList),
     io_lib:format("~p", [L]).
@@ -102,6 +106,8 @@ parse_settings(<<0,5,Val:4/binary,T/binary>>, S) ->
     parse_settings(T, [{?SETTINGS_MAX_FRAME_SIZE, binary:decode_unsigned(Val)}|S]);
 parse_settings(<<0,6,Val:4/binary,T/binary>>, S)->
     parse_settings(T, [{?SETTINGS_MAX_HEADER_LIST_SIZE, binary:decode_unsigned(Val)}|S]);
+parse_settings(<<0,8,Val:4/binary,T/binary>>, S)->
+    parse_settings(T, [{?SETTINGS_ENABLE_CONNECT_PROTOCOL, binary:decode_unsigned(Val)}|S]);
 % An endpoint that receives a SETTINGS frame with any unknown or unsupported identifier 
 % MUST ignore that setting
 parse_settings(<<_:6/binary,T/binary>>, S)->
@@ -125,6 +131,8 @@ overlay_(OriginalS, S, {settings, [{?SETTINGS_MAX_FRAME_SIZE, Val}|PList]}) ->
     overlay_(OriginalS, S#settings{max_frame_size=Val}, {settings, PList});
 overlay_(OriginalS, S, {settings, [{?SETTINGS_MAX_HEADER_LIST_SIZE, Val}|PList]}) ->
     overlay_(OriginalS, S#settings{max_header_list_size=Val}, {settings, PList});
+overlay_(OriginalS, S, {settings, [{?SETTINGS_ENABLE_CONNECT_PROTOCOL, Val}|PList]}) ->
+    overlay_(OriginalS, S#settings{enable_connect_protocol=Val}, {settings, PList});
 overlay_(OriginalS, _S, {settings, [{_UnknownOrUnsupportedKey, _Val}|_]}) ->
     OriginalS;
 overlay_(_OriginalS, S, {settings, []}) ->
@@ -193,7 +201,11 @@ to_binary(?SETTINGS_MAX_FRAME_SIZE, #settings{max_frame_size=MFS}) ->
 to_binary(?SETTINGS_MAX_HEADER_LIST_SIZE, #settings{max_header_list_size=undefined}) ->
     <<>>;
 to_binary(?SETTINGS_MAX_HEADER_LIST_SIZE, #settings{max_header_list_size=MHLS}) ->
-    <<16#6:16,MHLS:32>>.
+    <<16#6:16,MHLS:32>>;
+to_binary(?SETTINGS_ENABLE_CONNECT_PROTOCOL, #settings{enable_connect_protocol=undefined}) ->
+    <<>>;
+to_binary(?SETTINGS_ENABLE_CONNECT_PROTOCOL, #settings{enable_connect_protocol=ECP}) ->
+    <<16#8:16,ECP:32>>.
 
 
 -spec validate({settings, [proplists:property()]}) -> ok | {error, integer()}.
@@ -210,6 +222,9 @@ validate_([{?SETTINGS_INITIAL_WINDOW_SIZE, Size}|_T])
     {error, ?FLOW_CONTROL_ERROR};
 validate_([{?SETTINGS_MAX_FRAME_SIZE, Size}|_T])
   when Size < 16384; Size > 16777215 ->
+    {error, ?PROTOCOL_ERROR};
+validate_([{?SETTINGS_ENABLE_CONNECT_PROTOCOL, Val}|_T])
+  when Val > 1; Val < 0 ->
     {error, ?PROTOCOL_ERROR};
 validate_([_H|T]) ->
     validate_(T).
